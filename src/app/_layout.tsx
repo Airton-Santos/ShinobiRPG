@@ -6,6 +6,12 @@ export default function MainLayout(){
             <Stack.Screen name='index' options={{ headerShown: false }}/>
 
             <Stack.Screen name="(auth)/signup/page" options={{ headerShown: false }}/>
+
+            <Stack.Screen name="(panel)/characterSelection/page" options={{ headerShown: false }}/>
+
+            <Stack.Screen name="(panel)/createCharacter/page" options={{ headerShown: false }}/>
+
+            <Stack.Screen name="(panel)/createCharacter/clanSelection" options={{ headerShown: false }}/>
         </Stack>
     )
 }

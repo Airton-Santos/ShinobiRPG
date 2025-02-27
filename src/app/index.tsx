@@ -5,15 +5,15 @@ import { Link } from 'expo-router';
 import { auth } from '@/firebaseConfig';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { useState } from 'react';
+import { useRouter } from 'expo-router';
 
 
 export default function Login() {
-
+    const router = useRouter();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
   
-
 
   async function handleSigIn() {
     if (!email || !password) {
@@ -26,6 +26,7 @@ export default function Login() {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       alert("Login bem-sucedido!");
+      router.navigate("/(panel)/characterSelection/page")
     } catch (error: any) {
       alert("Erro ao fazer login: " + error.message);
     } finally {
