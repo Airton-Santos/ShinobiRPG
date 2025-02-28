@@ -26,6 +26,8 @@ export default function MainLayout(){
             <Stack.Screen name="(panel)/treinamento/page" options={{ headerShown: false }}/>
 
             <Stack.Screen name="(panel)/missoes/page" options={{ headerShown: false }}/>
+
+            <Stack.Screen name="(panel)/characterProfile/page" options={{ headerShown: false }}/>
             
         </Stack>
     )
