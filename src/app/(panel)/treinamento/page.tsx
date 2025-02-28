@@ -1,68 +1,136 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import Game from '@/components/minigames/minigameChakra';
-import { db, auth } from '@/firebaseConfig'; // Importa o Firebase
-import { doc, updateDoc, getDocs, query, where, collection } from 'firebase/firestore';
+import SpeedGame from '@/components/minigames/speedTrainingGame'
+import { db, auth } from '@/firebaseConfig';
+import { doc, updateDoc, getDocs, query, where, collection, Timestamp } from 'firebase/firestore';
 
 const TrainingScreen = () => {
-  const [isTrainingActive, setIsTrainingActive] = useState(false);
+  const [isChakraTrainingActive, setIsChakraTrainingActive] = useState(false);
+  const [isSpeedTrainingActive, setIsSpeedTrainingActive] = useState(false);
+  const [cooldownChakra, setCooldownChakra] = useState(false);
+  const [cooldownSpeed, setCooldownSpeed] = useState(false);
 
-  // Função que será chamada quando o jogo terminar
-  const handleGameOver = async () => {
-    try {
-      const userId = auth.currentUser?.uid;
-  
-      if (!userId) {
-        console.log('Usuário não autenticado!');
-        return;
+  useEffect(() => {
+    checkCooldown();
+  }, []);
+
+  const checkCooldown = async () => {
+    const userId = auth.currentUser?.uid;
+    if (!userId) return;
+
+    const charactersRef = collection(db, "characters");
+    const q = query(charactersRef, where("userId", "==", userId));
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+      const userDocSnap = querySnapshot.docs[0];
+      const userData = userDocSnap.data();
+      const lastChakraTraining = userData?.lastChakraTraining?.toDate();
+      const lastSpeedTraining = userData?.lastSpeedTraining?.toDate();
+      const now = new Date();
+
+      if (lastChakraTraining && now.getTime() - lastChakraTraining.getTime() < 24 * 60 * 60 * 1000) {
+        setCooldownChakra(true);
       }
-  
-      // Referência para a coleção de personagens
-      const charactersRef = collection(db, "characters");
-  
-      // Buscando o documento onde o campo userId é igual ao ID do usuário
-      const q = query(charactersRef, where("userId", "==", userId));
-      const querySnapshot = await getDocs(q);
-  
-      if (!querySnapshot.empty) {
-        const userDocSnap = querySnapshot.docs[0]; // Pega o primeiro documento encontrado
-        const userData = userDocSnap.data();
-        const currentChakra = userData?.stats?.chakra || 0; // Pega o chakra atual, ou 0 se não existir
-  
-        // Atualiza o chakra com um bônus de 5
-        await updateDoc(userDocSnap.ref, {
-          "stats.chakra": currentChakra + 5, // Adiciona 5 ao chakra atual
-        });
-  
-        console.log(`Chakra atualizado com sucesso para o personagem de ${userId}`);
-      } else {
-        console.log("Documento do personagem não encontrado!");
-      }
-    } catch (error) {
-      console.error('Erro ao atualizar chakra:', error);
+      if (lastSpeedTraining && now.getTime() - lastSpeedTraining.getTime() < 24 * 60 * 60 * 1000) {
+        setCooldownSpeed(true);
+      }      
     }
   };
 
-  const startTraining = () => {
-    setIsTrainingActive(true);
+  const handleChakraGameOver = async () => {
+    const userId = auth.currentUser?.uid;
+    if (!userId) return;
+
+    const charactersRef = collection(db, "characters");
+    const q = query(charactersRef, where("userId", "==", userId));
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+      const userDocSnap = querySnapshot.docs[0];
+      const userData = userDocSnap.data();
+      const currentChakra = userData?.stats?.chakra || 0;
+
+      await updateDoc(userDocSnap.ref, {
+        "stats.chakra": currentChakra + 5,
+        lastChakraTraining: Timestamp.now(),
+      });
+
+      console.log(`Chakra atualizado! Cooldown ativado.`);
+      setCooldownChakra(true);
+    }
   };
 
-  const closeTraining = () => {
-    setIsTrainingActive(false);
+  const handleSpeedGameOver = async () => {
+    const userId = auth.currentUser?.uid;
+    if (!userId) return;
+
+    const charactersRef = collection(db, "characters");
+    const q = query(charactersRef, where("userId", "==", userId));
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+      const userDocSnap = querySnapshot.docs[0];
+      const userData = userDocSnap.data();
+      const currentSpeed = userData?.stats?.velocidade || 0;
+
+      await updateDoc(userDocSnap.ref, {
+        "stats.velocidade": currentSpeed + 5,
+        lastSpeedTraining: Timestamp.now(),
+      });
+
+      console.log(`Velocidade atualizada! Cooldown ativado.`);
+      setCooldownSpeed(true);
+    }
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.overlay}>
-        <Text style={styles.title}>Treinamento de Chakra</Text>
-        <Text style={styles.subtitle}>Equilibre seu chakra e melhore suas habilidades!</Text>
+        <Text style={styles.title}>Treinamento</Text>
+        <Text style={styles.subtitle}>Melhore suas habilidades através do treino!</Text>
 
-        {!isTrainingActive ? (
-          <TouchableOpacity style={styles.button} onPress={startTraining}>
-            <Text style={styles.buttonText}>Iniciar Treinamento</Text>
-          </TouchableOpacity>
+        {!isChakraTrainingActive && !isSpeedTrainingActive ? (
+          <>
+            <TouchableOpacity
+              style={[styles.button, cooldownChakra && styles.disabledButton]}
+              onPress={() => {
+                if (cooldownChakra) {
+                  Alert.alert("Aguarde!", "Você só pode treinar chakra uma vez por dia.");
+                  return;
+                }
+                setIsChakraTrainingActive(true);
+              }}
+              disabled={cooldownChakra}
+            >
+              <Text style={styles.buttonText}>Treinamento de Chakra</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.button, cooldownSpeed && styles.disabledButton]}
+              onPress={() => {
+                if (cooldownSpeed) {
+                  Alert.alert("Aguarde!", "Você só pode treinar velocidade uma vez por dia.");
+                  return;
+                }
+                setIsSpeedTrainingActive(true);
+              }}
+              disabled={cooldownSpeed}
+            >
+              <Text style={styles.buttonText}>Treinamento de Velocidade</Text>
+            </TouchableOpacity>
+          </>
+        ) : isChakraTrainingActive ? (
+          <Game onGameOver={() => {
+            handleChakraGameOver();
+            setIsChakraTrainingActive(false);
+          }} />
         ) : (
-          <Game onGameOver={handleGameOver} />
+          <SpeedGame onGameOver={() => {
+            handleSpeedGameOver();
+            setIsSpeedTrainingActive(false);
+          }} />
         )}
       </View>
     </View>
@@ -103,6 +171,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     width: 250,
     alignItems: 'center',
+  },
+  disabledButton: {
+    backgroundColor: '#A0A0A0',
   },
   buttonText: {
     fontSize: 18,
