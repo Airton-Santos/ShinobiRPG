@@ -7,12 +7,12 @@ const KonohaVillage = () => {
 
   const handlerMissao = () => {
     // Navegar para a tela de missões
-    router.navigate("./(panel)/missoes/page");
+    router.navigate("/(panel)/missoes/page");
   };
 
   const handlerTreinamento = () => {
     // Navegar para a tela de treinamento
-    router.navigate("./(panel)/treinamento/page");
+    router.navigate("/(panel)/treinamento/page");
   };
 
   return (
