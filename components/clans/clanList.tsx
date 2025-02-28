@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, TouchableOpacity, FlatList } from "react-native";
 
 // Lista de clãs e seus status base
-const clans = [
+export const clans = [
   { name: "Uchiha", stats: { força: 5, velocidade: 7, vida: 6, defesa: 5, chakra: 8, controleChakra: 9 } },
   { name: "Senju", stats: { força: 7, velocidade: 6, vida: 10, defesa: 8, chakra: 5, controleChakra: 6 } },
   { name: "Hyuuga", stats: { força: 4, velocidade: 7, vida: 5, defesa: 6, chakra: 9, controleChakra: 10 } },
@@ -12,6 +12,7 @@ const clans = [
   { name: "Aburame", stats: { força: 4, velocidade: 6, vida: 6, defesa: 6, chakra: 7, controleChakra: 8 } },
   { name: "Inuzuka", stats: { força: 6, velocidade: 8, vida: 6, defesa: 6, chakra: 5, controleChakra: 4 } },
 ];
+
 
 type ClanListProps = {
   onSelectClan: (clan: string) => void;

@@ -1,40 +1,60 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, ActivityIndicator, Alert } from "react-native";
 import { useRouter } from 'expo-router';
-import { getFirestore, collection, getDocs } from 'firebase/firestore'; // Importe os métodos do Firestore
+import { getFirestore, collection, getDocs } from 'firebase/firestore';
+
+// Definindo as rotas da vila com tipos literais de string para evitar erro de tipo
+type VillageRoute = "/(panel)/villages/konoha" | "/(panel)/villages/kirigakure" | "/(panel)/villages/sunagakure" | "/(panel)/villages/kumogakure" | "/(panel)/villages/iwagakure";
+
+const villageRoutes: Record<string, VillageRoute> = {
+  "Konoha": "/(panel)/villages/konoha",
+  "Kirigakure": "/(panel)/villages/kirigakure",
+  "Sunagakure": "/(panel)/villages/sunagakure",
+  "Kumogakure": "/(panel)/villages/kumogakure",
+  "Iwagakure": "/(panel)/villages/iwagakure",
+};
 
 const CharacterSelection = () => {
   const router = useRouter();
-  const [characters, setCharacters] = useState<{ name: string }[]>([]);
-  const [loading, setLoading] = useState(true); // Para mostrar carregando enquanto busca
+  const [characters, setCharacters] = useState<{ name: string; village: string }[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const handlerCriarPersonagem = () => {
     router.navigate("/(panel)/createCharacter/clanSelection");
   };
 
-  const handlerSelecionarPersonagem = (characterName: string) => {
-    console.log(`Selecionado: ${characterName}`); // Substitua por navegação ou lógica necessária
+  const handlerSelecionarPersonagem = (characterName: string, village: string) => {
+    // Verificando se a vila tem uma rota definida
+    const villageRoute = villageRoutes[village as keyof typeof villageRoutes];
+
+    if (villageRoute) {
+      router.push(villageRoute); // Navega para a rota da vila
+    } else {
+      Alert.alert("Erro", `A vila '${village}' não tem uma rota definida.`);
+    }
   };
 
-  // Função para buscar personagens do Firestore
   const fetchCharacters = async () => {
     try {
-      const db = getFirestore(); // Inicialize o Firestore
-      const charactersCollection = collection(db, 'characters'); // Referência à coleção de personagens
+      const db = getFirestore();
+      const charactersCollection = collection(db, 'characters');
       const characterSnapshot = await getDocs(charactersCollection);
-      const characterList = characterSnapshot.docs.map(doc => ({ name: doc.data().name })); // Ajuste conforme seu modelo de dados
+      const characterList = characterSnapshot.docs.map(doc => ({
+        name: doc.data().name,
+        village: doc.data().village,
+      }));
 
       setCharacters(characterList);
     } catch (error) {
       console.error("Erro ao buscar personagens:", error);
       Alert.alert("Erro", "Não foi possível carregar os personagens.");
     } finally {
-      setLoading(false); // Atualiza o estado de loading
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchCharacters(); // Chama a função ao montar o componente
+    fetchCharacters();
   }, []);
 
   if (loading) {
@@ -42,7 +62,7 @@ const CharacterSelection = () => {
       <View style={{ flex: 1, backgroundColor: "#1E1E1E", alignItems: "center", justifyContent: "center" }}>
         <ActivityIndicator size="large" color="#FFF" />
       </View>
-    ); // Mostra um carregando enquanto busca os dados
+    );
   }
 
   return (
@@ -54,18 +74,12 @@ const CharacterSelection = () => {
           {characters.map((char, index) => (
             <TouchableOpacity 
               key={index} 
-              onPress={() => handlerSelecionarPersonagem(char.name)} 
+              onPress={() => handlerSelecionarPersonagem(char.name, char.village)} 
               style={{ backgroundColor: "#333", padding: 10, marginBottom: 10, borderRadius: 10 }}
             >
-              <Text style={{ color: "#FFF", fontSize: 18 }}>{char.name}</Text>
+              <Text style={{ color: "#FFF", fontSize: 18 }}>{char.name} - {char.village}</Text>
             </TouchableOpacity>
           ))}
-          <TouchableOpacity
-            onPress={handlerCriarPersonagem}
-            style={{ backgroundColor: "#FF6F00", padding: 10, borderRadius: 10, marginTop: 20 }}
-          >
-            <Text style={{ color: "#FFF", fontSize: 18 }}>Criar Novo Personagem</Text>
-          </TouchableOpacity>
         </>
       ) : (
         <TouchableOpacity

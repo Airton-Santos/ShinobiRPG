@@ -12,6 +12,21 @@ export default function MainLayout(){
             <Stack.Screen name="(panel)/createCharacter/page" options={{ headerShown: false }}/>
 
             <Stack.Screen name="(panel)/createCharacter/clanSelection" options={{ headerShown: false }}/>
+
+            <Stack.Screen name="(panel)/villages/kirigakure" options={{ headerShown: false }}/>
+
+            <Stack.Screen name="(panel)/villages/konoha" options={{ headerShown: false }}/>
+            
+            <Stack.Screen name="(panel)/villages/kumogakure" options={{ headerShown: false }}/>
+
+            <Stack.Screen name="(panel)/villages/sunagakure" options={{ headerShown: false }}/>
+
+            <Stack.Screen name="(panel)/villages/iwagakure" options={{ headerShown: false }}/>
+
+            <Stack.Screen name="(panel)/treinamento/page" options={{ headerShown: false }}/>
+
+            <Stack.Screen name="(panel)/missoes/page" options={{ headerShown: false }}/>
+            
         </Stack>
     )
 }
