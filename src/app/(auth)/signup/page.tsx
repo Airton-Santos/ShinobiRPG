@@ -67,8 +67,7 @@ export default function Signup() {
               style={styles.input}
               value={email}
               onChangeText={setEmail}
-              placeholder='Digite Sua Senha...'
-              secureTextEntry
+              placeholder='Digite Seu Email...'
             />
           </View>
 
