@@ -18,7 +18,7 @@ const SpeedTrainingGame = ({ onGameOver }) => {
 
   const handlePress = () => {
     if (progress < 100) {
-      setProgress(progress + 10); // Cada toque aumenta a barra
+      setProgress(progress + 2); // Cada toque aumenta a barra
     }
   };
 

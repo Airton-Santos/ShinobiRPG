@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import Game from '@/components/minigames/minigameChakra';
-import SpeedGame from '@/components/minigames/speedTrainingGame'
+import SpeedGame from '@/components/minigames/speedTrainingGame';
+import StrenghtGame from '@/components/minigames/strengthTrainingGame';
 import { db, auth } from '@/firebaseConfig';
 import { doc, updateDoc, getDocs, query, where, collection, Timestamp } from 'firebase/firestore';
 
 const TrainingScreen = () => {
   const [isChakraTrainingActive, setIsChakraTrainingActive] = useState(false);
   const [isSpeedTrainingActive, setIsSpeedTrainingActive] = useState(false);
+  const [isStrengthTrainingActive, setIsStrengthTrainingActive] = useState(false);
   const [cooldownChakra, setCooldownChakra] = useState(false);
   const [cooldownSpeed, setCooldownSpeed] = useState(false);
+  const [cooldownStrength, setCooldownStrength] = useState(false);
 
   useEffect(() => {
     checkCooldown();
@@ -26,16 +29,21 @@ const TrainingScreen = () => {
     if (!querySnapshot.empty) {
       const userDocSnap = querySnapshot.docs[0];
       const userData = userDocSnap.data();
-      const lastChakraTraining = userData?.lastChakraTraining?.toDate();
-      const lastSpeedTraining = userData?.lastSpeedTraining?.toDate();
       const now = new Date();
+
+      const lastChakraTraining = userData?.lastChakraTraining?.toDate();
+      const lastStrengthTraining = userData?.lastStrengthTraining?.toDate();
+      const lastSpeedTraining = userData?.lastSpeedTraining?.toDate();
 
       if (lastChakraTraining && now.getTime() - lastChakraTraining.getTime() < 24 * 60 * 60 * 1000) {
         setCooldownChakra(true);
       }
       if (lastSpeedTraining && now.getTime() - lastSpeedTraining.getTime() < 24 * 60 * 60 * 1000) {
         setCooldownSpeed(true);
-      }      
+      }
+      if (lastStrengthTraining && now.getTime() - lastStrengthTraining.getTime() < 24 * 60 * 60 * 1000) {
+        setCooldownStrength(true);
+      }
     }
   };
 
@@ -85,13 +93,36 @@ const TrainingScreen = () => {
     }
   };
 
+  const handleStrengthGameOver = async () => {
+    const userId = auth.currentUser?.uid;
+    if (!userId) return;
+
+    const charactersRef = collection(db, "characters");
+    const q = query(charactersRef, where("userId", "==", userId));
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+      const userDocSnap = querySnapshot.docs[0];
+      const userData = userDocSnap.data();
+      const currentStrength = userData?.stats?.força || 0;
+
+      await updateDoc(userDocSnap.ref, {
+        "stats.força": currentStrength + 5,
+        lastStrengthTraining: Timestamp.now(),
+      });
+
+      console.log(`Força atualizada! Cooldown ativado.`);
+      setCooldownStrength(true);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.overlay}>
         <Text style={styles.title}>Treinamento</Text>
         <Text style={styles.subtitle}>Melhore suas habilidades através do treino!</Text>
 
-        {!isChakraTrainingActive && !isSpeedTrainingActive ? (
+        {!isChakraTrainingActive && !isSpeedTrainingActive && !isStrengthTrainingActive ? (
           <>
             <TouchableOpacity
               style={[styles.button, cooldownChakra && styles.disabledButton]}
@@ -120,16 +151,35 @@ const TrainingScreen = () => {
             >
               <Text style={styles.buttonText}>Treinamento de Velocidade</Text>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.button, cooldownStrength && styles.disabledButton]}
+              onPress={() => {
+                if (cooldownStrength) {
+                  Alert.alert("Aguarde!", "Você só pode treinar força uma vez por dia.");
+                  return;
+                }
+                setIsStrengthTrainingActive(true);
+              }}
+              disabled={cooldownStrength}
+            >
+              <Text style={styles.buttonText}>Treinamento de Força</Text>
+            </TouchableOpacity>
           </>
         ) : isChakraTrainingActive ? (
           <Game onGameOver={() => {
             handleChakraGameOver();
             setIsChakraTrainingActive(false);
           }} />
-        ) : (
+        ) : isSpeedTrainingActive ? (
           <SpeedGame onGameOver={() => {
             handleSpeedGameOver();
             setIsSpeedTrainingActive(false);
+          }} />
+        ) : (
+          <StrenghtGame onGameOver={() => {
+            handleStrengthGameOver();
+            setIsStrengthTrainingActive(false);
           }} />
         )}
       </View>
