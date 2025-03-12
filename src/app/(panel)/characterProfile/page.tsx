@@ -1,14 +1,33 @@
+// CharacterProfile.tsx
 import React, { useEffect, useState } from "react";
 import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
 import { getAuth } from "firebase/auth";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/firebaseConfig";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const CharacterProfile = () => {
   const auth = getAuth();
   const user = auth.currentUser; // Obtém o usuário autenticado
   const [character, setCharacter] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [pontos, setPontos] = useState<number>(0); // Estado para armazenar os pontos
+
+
+    // Função para buscar pontos no AsyncStorage
+    const carregarPontos = async () => {
+      try {
+        const pontosSalvos = await AsyncStorage.getItem('pontos');
+        const pontos = pontosSalvos ? JSON.parse(pontosSalvos) : 0;
+        setPontos(pontos);
+      } catch (error) {
+        console.error('Erro ao carregar os pontos:', error);
+      }
+    };
+
+    useEffect(() => {
+      carregarPontos();
+    }, []);// Carrega os pontos quando a tela for montada
 
   useEffect(() => {
     const fetchCharacter = async () => {
@@ -92,6 +111,12 @@ const CharacterProfile = () => {
         <Text style={styles.stat}>Completas: {character.missionsCompleted}</Text>
         <Text style={styles.stat}>Falhas: {character.missionsFailed}</Text>
       </View>
+
+      {/* Pontos do jogador */}
+      <View style={styles.section}>
+        <Text style={styles.title}>Pontos Atuais</Text>
+        <Text style={styles.text}>Pontos: {pontos}</Text>
+      </View>
     </View>
   );
 };
@@ -109,6 +134,11 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center",
     marginBottom: 20,
+  },
+  text: {
+    fontSize: 18,
+    color: '#FFF',
+    marginBottom: 10,
   },
   section: {
     backgroundColor: "#333",

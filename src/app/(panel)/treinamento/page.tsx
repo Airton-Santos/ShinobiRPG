@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import Game from '@/components/minigames/minigameChakra';
 import SpeedGame from '@/components/minigames/speedTrainingGame';
 import StrenghtGame from '@/components/minigames/strengthTrainingGame';
+import DefenseGame from '@/components/minigames/defenseTrainingGame'
 import { db, auth } from '@/firebaseConfig';
 import { doc, updateDoc, getDocs, query, where, collection, Timestamp } from 'firebase/firestore';
 
@@ -10,9 +11,11 @@ const TrainingScreen = () => {
   const [isChakraTrainingActive, setIsChakraTrainingActive] = useState(false);
   const [isSpeedTrainingActive, setIsSpeedTrainingActive] = useState(false);
   const [isStrengthTrainingActive, setIsStrengthTrainingActive] = useState(false);
+  const [isDefenseTrainingActive, setIsDefenseTrainingActive] = useState(false)
   const [cooldownChakra, setCooldownChakra] = useState(false);
   const [cooldownSpeed, setCooldownSpeed] = useState(false);
   const [cooldownStrength, setCooldownStrength] = useState(false);
+  const [cooldownDefense, setCooldownDefense] = useState(false);
 
   useEffect(() => {
     checkCooldown();
@@ -34,6 +37,7 @@ const TrainingScreen = () => {
       const lastChakraTraining = userData?.lastChakraTraining?.toDate();
       const lastStrengthTraining = userData?.lastStrengthTraining?.toDate();
       const lastSpeedTraining = userData?.lastSpeedTraining?.toDate();
+      const lastDefenseTraining = userData?.lastDefenseTraining?.toDate();
 
       if (lastChakraTraining && now.getTime() - lastChakraTraining.getTime() < 24 * 60 * 60 * 1000) {
         setCooldownChakra(true);
@@ -43,6 +47,9 @@ const TrainingScreen = () => {
       }
       if (lastStrengthTraining && now.getTime() - lastStrengthTraining.getTime() < 24 * 60 * 60 * 1000) {
         setCooldownStrength(true);
+      }
+      if (lastDefenseTraining && now.getTime() -  lastDefenseTraining.getTime() < 24 * 60 * 60 * 1000){
+        setCooldownDefense(true);
       }
     }
   };
@@ -116,13 +123,36 @@ const TrainingScreen = () => {
     }
   };
 
+  const handleDefenseGameOver = async () => {
+    const userId = auth.currentUser?.uid;
+    if (!userId) return;
+
+    const charactersRef = collection(db, "characters");
+    const q = query(charactersRef, where("userId", "==", userId));
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+      const userDocSnap = querySnapshot.docs[0];
+      const userData = userDocSnap.data();
+      const currentDefense = userData?.stats?.defesa || 0;
+
+      await updateDoc(userDocSnap.ref, {
+        "stats.defesa": currentDefense + 5,
+        lastDefenseTraining: Timestamp.now(),
+      });
+
+      console.log(`defesa atualizada! Cooldown ativado.`);
+      setCooldownDefense(true);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.overlay}>
         <Text style={styles.title}>Treinamento</Text>
         <Text style={styles.subtitle}>Melhore suas habilidades através do treino!</Text>
 
-        {!isChakraTrainingActive && !isSpeedTrainingActive && !isStrengthTrainingActive ? (
+        {!isChakraTrainingActive && !isSpeedTrainingActive && !isStrengthTrainingActive && !isDefenseTrainingActive ?(
           <>
             <TouchableOpacity
               style={[styles.button, cooldownChakra && styles.disabledButton]}
@@ -165,6 +195,20 @@ const TrainingScreen = () => {
             >
               <Text style={styles.buttonText}>Treinamento de Força</Text>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.button, cooldownDefense && styles.disabledButton]}
+              onPress={() => {
+                if (cooldownDefense) {
+                  Alert.alert("Aguarde!", "Você só pode treinar defesa uma vez por dia.");
+                  return;
+                }
+                setIsDefenseTrainingActive(true);
+              }}
+              disabled={cooldownDefense}
+            >
+              <Text style={styles.buttonText}>Treinamento de Defesa</Text>
+            </TouchableOpacity>
           </>
         ) : isChakraTrainingActive ? (
           <Game onGameOver={() => {
@@ -176,10 +220,15 @@ const TrainingScreen = () => {
             handleSpeedGameOver();
             setIsSpeedTrainingActive(false);
           }} />
-        ) : (
+        ) : isStrengthTrainingActive ? (
           <StrenghtGame onGameOver={() => {
             handleStrengthGameOver();
             setIsStrengthTrainingActive(false);
+          }} />
+        ) : (
+          <DefenseGame onGameOver={() => {
+            handleDefenseGameOver();
+            setIsDefenseTrainingActive(false);
           }} />
         )}
       </View>

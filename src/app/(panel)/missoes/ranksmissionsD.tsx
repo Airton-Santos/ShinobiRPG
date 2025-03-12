@@ -9,34 +9,15 @@ const MissionRankSelectionScreen = () => {
 
   // Funções para navegar para a tela de missões de cada rank
   const goToMissionD = () => {
-    router.navigate('/(panel)/missoes/ranksmissionsD')
+    router.navigate('/(panel)/missoes/missionsD/catarlixo')
   };
 
-  const goToMissionC = () => {
-    window.location.href = "/mission/C";
-  };
-
-  const goToMissionB = () => {
-    window.location.href = "/mission/B";
-  };
-
-  const goToMissionA = () => {
-    window.location.href = "/mission/A";
-  };
-
-  const goToMissionS = () => {
-    window.location.href = "/mission/S";
-  };
-
+  
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Escolha o Rank da Missão</Text>
 
       <Button title="Missão Rank D" onPress={goToMissionD} />
-      <Button title="Missão Rank C" onPress={goToMissionC} />
-      <Button title="Missão Rank B" onPress={goToMissionB} />
-      <Button title="Missão Rank A" onPress={goToMissionA} />
-      <Button title="Missão Rank S" onPress={goToMissionS} />
     </View>
   );
 };

@@ -28,6 +28,11 @@ export default function MainLayout(){
             <Stack.Screen name="(panel)/missoes/page" options={{ headerShown: false }}/>
 
             <Stack.Screen name="(panel)/characterProfile/page" options={{ headerShown: false }}/>
+
+            <Stack.Screen name="(panel)/missoes/ranksmissionsD" options={{ headerShown: false }}/>
+
+            <Stack.Screen name="(panel)/missoes/missionsD/catarlixo" options={{ headerShown: false }}/>
+
             
         </Stack>
     )
